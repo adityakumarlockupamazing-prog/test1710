@@ -23,7 +23,7 @@
             width: 100%;
             height: 100%;
             background-color: #121212;
-            display: flex; /* Ensure it is visible initially */
+            display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -146,7 +146,7 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
     <script>
-        // Data for your campus locations (Copied from the first script block)
+        // Data for your campus locations
         const campusLocations = [
             {
                 name: "Main Building",
@@ -170,6 +170,7 @@
             }
         ];
 
+        // Haversine formula to calculate distance between two GPS coordinates
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
             const φ1 = lat1 * Math.PI / 180;
@@ -181,6 +182,7 @@
             return R * c;
         }
 
+        // Calculates the initial bearing from point 1 to point 2
         function calculateBearing(lat1, lon1, lat2, lon2) {
             const φ1 = lat1 * Math.PI / 180;
             const φ2 = lat2 * Math.PI / 180;
@@ -197,9 +199,8 @@
             },
             init: function () {
                 const sceneEl = this.el.sceneEl;
-                const arrowEl = document.getElementById('direction-arrow');
                 let targetLocation = null;
-                const self = this; // Use a variable for 'this' in event listeners
+                const self = this;
 
                 sceneEl.addEventListener('set-target-location', (event) => {
                     const { name } = event.detail;
@@ -209,20 +210,7 @@
                 });
                 
                 sceneEl.addEventListener('gps-camera-update-position', (event) => {
-                    const userLat = event.detail.position.latitude;
-                    const userLon = event.detail.position.longitude;
-                    
-                    if (targetLocation) {
-                        // Calculate bearing and rotate the arrow to point to the target
-                        const bearing = calculateBearing(userLat, userLon, targetLocation.latitude, targetLocation.longitude);
-                        // Convert bearing to A-Frame rotation (which uses world rotation, not camera-relative)
-                        // A-Frame's rotation is complex with AR, but setting Y rotation to the bearing should align it roughly
-                        arrowEl.object3D.rotation.y = -(bearing * Math.PI / 180); 
-                    } else {
-                        // Hide arrow if no target is selected
-                        arrowEl.object3D.visible = false;
-                    }
-                    
+                    // This listener is crucial for updating the markers as the user moves
                     self.updateARMarkers();
                 });
             },
@@ -233,7 +221,7 @@
 
                 // Check if userCamera is ready and has position data
                 if (!userCamera || !userCamera.components['gps-new-camera'] || !userCamera.components['gps-new-camera'].lastPosition) {
-                    return; // Exit if GPS position is not yet available
+                    return; 
                 }
                 
                 const userPosition = userCamera.components['gps-new-camera'].lastPosition;
@@ -265,7 +253,7 @@
                         text.setAttribute('scale', '20 20 20');
                         text.setAttribute('look-at', '[gps-new-camera]');
                         text.setAttribute('align', 'center');
-                        text.setAttribute('color', isCurrentTarget ? '#FFD700' : 'white'); // Highlight target text
+                        text.setAttribute('color', isCurrentTarget ? '#FFD700' : 'white'); // Highlight color
                         text.setAttribute('background-color', isCurrentTarget ? 'rgba(255,0,0,0.6)' : 'rgba(0,0,0,0.5)');
                         text.setAttribute('position', '0 10 0');
                         entity.appendChild(text);
@@ -280,17 +268,11 @@
                             targetRing.setAttribute('look-at', '[gps-new-camera]');
                             targetRing.setAttribute('material', 'shader: standard; emissive: #FF0000; emissiveIntensity: 0.5;');
                             entity.appendChild(targetRing);
-                            document.getElementById('direction-arrow').object3D.visible = true; // Show arrow
                         }
 
                         sceneEl.appendChild(entity);
                     }
                 });
-
-                // Hide arrow if no target is selected after the loop
-                if (!isTargetSelected) {
-                    document.getElementById('direction-arrow').object3D.visible = false;
-                }
             }
         });
 
@@ -319,7 +301,7 @@
                         listItem.addEventListener('click', () => {
                             sceneEl.emit('set-target-location', { name: location.name });
                             searchInput.value = location.name;
-                            renderLocationList(location.name); // Re-render to show selection
+                            renderLocationList(location.name);
                         });
                         listEl.appendChild(listItem);
                     });
@@ -389,17 +371,7 @@
 
             <a-camera gps-new-camera look-controls></a-camera>
             
-            <a-cone id="direction-arrow" 
-                position="0 -5 -10" 
-                rotation="0 0 0" 
-                height="10" 
-                radius-bottom="5" 
-                radius-top="0" 
-                color="#FF0000"
-                look-at="[gps-new-camera]"
-                material="opacity: 0.8;">
-            </a-cone>
-        </a-scene>
+            </a-scene>
 
         <div id="left-panel">
             <h1>Campus Navigator AR</h1>
